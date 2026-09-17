@@ -327,6 +327,19 @@ def tick():
 
 # ── bot control ──
 
+def _bot_run_wrapper():
+    """Run bot, then update state when it exits."""
+    global BOT_INSTANCE
+    if BOT_INSTANCE is None:
+        return
+    try:
+        BOT_INSTANCE.run()
+    finally:
+        state['bot_running'] = False
+        state['bot_status'] = 'idle' if state['bot_status'] != 'error' else 'error'
+        if BOT_INSTANCE is not None:
+            BOT_INSTANCE._running = False
+
 def start_bot():
     """Start TradingBot in a background thread."""
     global BOT_THREAD, BOT_INSTANCE
@@ -343,7 +356,7 @@ def start_bot():
         state['bot_running'] = True
         state['bot_status'] = 'running'
         state['bot_error'] = ''
-        t = threading.Thread(target=bot.run, daemon=True)
+        t = threading.Thread(target=_bot_run_wrapper, daemon=True)
         t.start()
         BOT_THREAD = t
         return {'ok': True}
@@ -360,7 +373,9 @@ def stop_bot():
     try:
         if BOT_INSTANCE is not None:
             BOT_INSTANCE.stop()
-        state['bot_status'] = 'stopping'
+        # Immediately update state so button changes right away
+        state['bot_running'] = False
+        state['bot_status'] = 'idle'
         return {'ok': True}
     except Exception as e:
         return {'ok': False, 'error': str(e)}
