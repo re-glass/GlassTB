@@ -1,0 +1,14 @@
+{
+  "name": "trading-gui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pyinstaller --name trading_gui --onefile --add-data 'dashboard.html:dashboard.html' --add-data 'styles.css:styles.css' --hidden-import pywebview --hidden-import flask app.py",
+    "run": "python app.py"
+  },
+  "dependencies": {
+    "flask": "^3.0.0",
+    "pywebview": "^6.0.0"
+  }
+}

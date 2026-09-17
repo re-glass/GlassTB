@@ -1,0 +1,35 @@
+# Credentials and tokens
+tokens.json
+positions.json
+.env
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env/
+
+# Data files (large CSVs)
+*.csv
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Optimization results
+optimization_results.json
+
+# TUI cache files
+current_prices_cache.json
+historical_cache.json
+#*

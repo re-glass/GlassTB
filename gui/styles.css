@@ -1,0 +1,239 @@
+/* ── Trading Bot GUI — dark dashboard, btop-inspired ────────────────── */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0c10;
+  color: #c8d0d8;
+  font-family: "Ubuntu Mono", "DejaVu Sans Mono", "Monaco", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Box (panel with thin border) ────────────────────────────────────── */
+
+.box {
+  border: 1px solid #3a4050;
+  background: #0e1117;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+/* ── Status bar ───────────────────────────────────────────────────────── */
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #6a7282;
+}
+
+.status-bar span {
+  letter-spacing: 0.3px;
+}
+
+.status-bar.bottom {
+  margin-top: 4px;
+}
+
+/* ── Top box ──────────────────────────────────────────────────────────── */
+
+.top-box {
+  text-align: left;
+  color: #6a7282;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Bot panel ────────────────────────────────────────────────────────── */
+
+.bot-panel .panel-header,
+.positions-panel .panel-header,
+.table-box .table-header {
+  color: #7ec8e3;
+  font-weight: bold;
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.bot-panel .panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.metric-label {
+  color: #8a92a2;
+}
+
+.metric-value {
+  color: #c8d0d8;
+  font-weight: bold;
+}
+
+.metric-value.positive {
+  color: #7ec8e3;
+}
+
+.metric-value.negative {
+  color: #e06c75;
+}
+
+.timestamp {
+  color: #6a7282;
+  margin-left: auto;
+  font-size: 11px;
+}
+
+/* ── Table ────────────────────────────────────────────────────────────── */
+
+.table-box .table-header {
+  margin-bottom: 4px;
+}
+
+#price-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+#price-table th {
+  color: #7ec8e3;
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid #2a3040;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+#price-table th:nth-child(2),
+#price-table td:nth-child(2) {
+  text-align: right;
+}
+
+#price-table th:nth-child(3),
+#price-table td:nth-child(3) {
+  text-align: center;
+}
+
+#price-table th:nth-child(4),
+#price-table td:nth-child(4) {
+  text-align: center;
+}
+
+#price-table td {
+  padding: 4px 8px;
+  color: #c8d0d8;
+  border-bottom: 1px solid #1a2030;
+}
+
+#price-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.price-up {
+  color: #7ec8e3;
+}
+
+.price-down {
+  color: #e06c75;
+}
+
+.chart-bar {
+  color: #7ec8e3;
+  font-size: 14px;
+  letter-spacing: -2px;
+  white-space: nowrap;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* ── Positions panel ─────────────────────────────────────────────────── */
+
+.positions-panel .positions-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.dash-row {
+  color: #4a5060;
+  padding: 2px 0;
+}
+
+.positions-inner .no-positions {
+  color: #6a7282;
+  text-align: center;
+  padding: 6px 0;
+}
+
+.positions-inner .position-line {
+  color: #c8d0d8;
+  padding: 2px 0;
+  display: flex;
+  gap: 8px;
+}
+
+.positions-inner .position-line .pos-ticker {
+  color: #7ec8e3;
+  width: 70px;
+}
+
+.positions-inner .position-line .pos-side {
+  color: #8a92a2;
+  width: 70px;
+}
+
+.positions-inner .position-line .pos-qty {
+  color: #c8d0d8;
+  width: 60px;
+  text-align: right;
+}
+
+.positions-inner .position-line .pos-entry {
+  color: #8a92a2;
+  width: 100px;
+  text-align: right;
+}
+
+/* ── Scrollbar (subtle) ──────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0e1117;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a3040;
+  border-radius: 3px;
+}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GlassTB</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a12;color:#a0b0c8;font-family:"DejaVu Sans Mono","Monaco","Courier New",monospace;font-size:13px;line-height:1.45;padding:10px;min-height:100vh;display:flex;flex-direction:column;align-items:center;user-select:none}
+.container{width:100%;max-width:800px;display:flex;flex-direction:column;gap:6px}
+.box{border:1px solid #5a7a9a;background:#0c0c16;border-radius:2px;padding:5px 10px}
+.status-bar{text-align:center;font-size:11px;color:#7a8a9a;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 4px}
+.cursor{display:inline-block;width:7px;height:13px;background:#fff;opacity:0.85;flex-shrink:0}
+.top-box{text-align:center;font-size:14px;color:#8aa0b8;padding:5px 10px}
+.bot-title-row{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;font-size:13px}
+.bot-title{color:#7ec8e3;font-weight:bold;letter-spacing:1px;font-size:14px;white-space:nowrap}
+.bot-metrics{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;color:#8aa0b8}
+.metric{white-space:nowrap}
+.metric .label{color:#6a8098}
+.metric .value{color:#7ec8e3;font-weight:bold}
+.bot-pnl-pos .value{color:#7ec8e3}
+.bot-pnl-neg .value{color:#e06c75}
+.bot-second-row{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;font-size:13px;color:#6a8098;margin-top:2px}
+.pnl-label{color:#6a8098}
+.pnl-pos{color:#7ec8e3;font-weight:bold}
+.pnl-neg{color:#e06c75;font-weight:bold}
+.ts{color:#5a6a7a;font-size:11px;margin-left:auto}
+.market-header{text-align:center;color:#7ec8e3;font-weight:bold;font-size:14px;letter-spacing:2px;margin-bottom:3px}
+table.price-table{width:100%;border-collapse:collapse;font-size:12px}
+table.price-table th{color:#7ec8e3;text-align:left;padding:4px 8px;font-weight:bold;letter-spacing:1px;font-size:11px;border-bottom:1px solid #3a5a7a}
+table.price-table th:nth-child(2),table.price-table td:nth-child(2){text-align:right}
+table.price-table th:nth-child(3),table.price-table td:nth-child(3){text-align:center}
+table.price-table th:nth-child(4),table.price-table td:nth-child(4){text-align:center;width:36px}
+table.price-table td{padding:4px 8px;border-bottom:1px solid #1a2a3a;color:#8aa0b8}
+table.price-table tbody tr:last-child td{border-bottom:none}
+.bar-outer{display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.bar-track{display:inline-block;height:11px;background:#14142a;border:1px solid #3a5a7a;border-radius:1px;width:74px;position:relative;overflow:hidden}
+.bar-fill{display:block;height:100%;background:#7ec8e3}
+.candle{display:inline-flex;flex-direction:column;align-items:center;position:relative;height:30px}
+.wick{position:absolute;left:50%;transform:translateX(-50%);width:1px;background:#7ec8e3;top:5px;bottom:5px}
+.cbody{display:inline-block;background:#7ec8e3;height:10px;margin-top:8px}
+.pos-header{text-align:center;color:#7ec8e3;font-weight:bold;font-size:14px;letter-spacing:2px;position:relative;padding-bottom:3px;margin-bottom:1px}
+.pos-header::after{content:'';position:absolute;bottom:0;left:5%;right:5%;height:1px;background:#3a5a7a}
+.pos-box{margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:#6a8098}
+.pos-dot{display:inline-block;width:5px;height:11px;background:#3a5a7a;opacity:0.6;flex-shrink:0}
+.bot-control-panel{display:flex;flex-direction:column;gap:4px}
+.bot-control-top{display:flex;align-items:center;gap:10px}
+.bot-status-label{font-weight:bold;font-size:12px;letter-spacing:1px;padding:2px 8px;border-radius:2px}
+.bot-running{color:#0a0a12;background:#7ec8e3}
+.bot-stopped{color:#0a0a12;background:#6a8098}
+.bot-stopping{color:#0a0a12;background:#e0a060}
+.bot-mode-label{font-size:11px;color:#7a8a9a;margin-left:auto}
+.btn{padding:4px 14px;border:1px solid #5a7a9a;border-radius:2px;background:#0c0c16;color:#7ec8e3;font-family:inherit;font-size:12px;font-weight:bold;letter-spacing:1px;cursor:pointer}
+.btn:hover{background:#1a2a3a}
+.btn-start{border-color:#7ec8e3;color:#7ec8e3}
+.btn-stop{border-color:#e06c75;color:#e06c75}
+.btn.disabled{opacity:0.5;cursor:not-allowed}
+.bot-control-info{display:flex;flex-wrap:wrap;gap:10px;font-size:12px}
+.bot-error{color:#e06c75;font-size:11px;padding:4px 0}
+.trade-log{display:flex;flex-direction:column;gap:1px;font-size:11px;max-height:200px;overflow-y:auto}
+.trade-line{display:flex;align-items:center;gap:8px;padding:2px 0;border-bottom:1px solid #1a2a3a}
+.trade-time{color:#5a6a7a;width:60px;flex-shrink:0}
+.trade-symbol{color:#7ec8e3;width:50px;flex-shrink:0;font-weight:bold}
+.trade-side{width:40px;flex-shrink:0;text-align:center;border-radius:1px}
+.trade-side-long{color:#7ec8e3}
+.trade-side-short{color:#e06c75}
+.trade-qty{width:40px;text-align:right;color:#8aa0b8;flex-shrink:0}
+.trade-price{width:80px;text-align:right;color:#8aa0b8;flex-shrink:0}
+.trade-reason{color:#5a6a7a;flex:1}
+.trade-pnl-pos{color:#7ec8e3}
+.trade-pnl-neg{color:#e06c75}
+.trade-log-empty{color:#6a8098;text-align:center;padding:10px 0}
+</style>
+</head>
+<body>
+<div class="container" id="root"></div>
+<script>
+(function () {
+  var INTERVAL_MS = 3000;
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function fetchScene() {
+    return fetch("/api/scene", { headers: { "Accept": "text/html" } })
+      .then(function (r) { return r.text(); })
+      .catch(function () { return ""; });
+  }
+  function render() {
+    fetchScene().then(function (html) {
+      var root = document.getElementById("root");
+      if (root && html) root.innerHTML = html;
+    });
+  }
+  function loop() { render(); return sleep(INTERVAL_MS).then(function () { return loop(); }); }
+  loop();
+  window.toggleBot = function () {
+    var btn = document.querySelector('.btn-start, .btn-stop');
+    if (!btn || btn.disabled) return;
+    var isStart = btn.classList.contains('btn-start');
+    fetch('/api/bot/' + (isStart ? 'start' : 'stop'), { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (!d.ok && d.error) alert('Bot: ' + d.error); })
+      .catch(function (e) { alert('Request failed: ' + e); });
+  };
+})();
+</script>
+</body>
+</html>
