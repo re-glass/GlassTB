@@ -24,8 +24,7 @@ import logging
 import threading
 from datetime import datetime
 
-import flask
-from flask import Flask, Response, request, jsonify
+from flask import Flask, Response, jsonify
 
 flask_logger = logging.getLogger('werkzeug')
 flask_logger.setLevel(logging.ERROR)

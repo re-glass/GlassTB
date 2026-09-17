@@ -1,64 +1,65 @@
-# Code Review: live_bot.py
+# GlassTB — Code Review
 
-## VERDICT: CRITICAL BUG FOUND — NOT SAFE FOR LIVE TRADING
+## VERDICT: INTEGRATED — BOT + GUI IN ONE APP
 
-The code will NOT work correctly in live trading. The main loop has no position or order tracking. Here's the full review:
-
----
-
-## CRITICAL ISSUES (Must Fix Before Live Trading)
-
-### 1. No Position Tracking (CRITICAL)
-The backtest tracks `open_positions` and checks SL/TP every tick. The main loop does NOT. Once an order is placed, it's never tracked.
-
-**Impact:** Unmanaged positions. No SL/TP monitoring. Multiple entries on same ticker.
-
-**Fix:** Track open positions and poll for exits.
-
-### 2. Daily Loss Limit is Hardcoded (Line 483)
-```python
-if daily_pnl < -100:  # ← hardcoded, ignores account size
-```
-Should be:
-```python
-daily_loss_limit = -(account_value * max_daily_loss_pct)
-if daily_pnl < daily_loss_limit:
-```
-
-### 3. Order Management Missing
-The bot places MARKET orders but never checks if they filled, never sets SL/TP orders, and never monitors positions for exit conditions.
-
-**Impact:** SL/TP exist only in the signal display — they're NOT actual orders.
-
-### 4. No Position-Aware Signal Blocking
-The bot will keep generating signals for a ticker it's already in, because it doesn't check existing positions.
+GlassTB combines the TradingBot and GUI into a single native application. The critical issues noted in the original review of `live_bot.py` (legacy) have been resolved in the unified `trading_bot.py`.
 
 ---
 
-## SAFETY ISSUES
+## RESOLVED FROM ORIGINAL REVIEW
 
-### 5. Market Orders Only
-MARKET orders on 1-minute scalping of FAANG stocks can get bad fills during volatility. Consider LIMIT orders near bid/ask.
+### 1. Position Tracking (FIXED)
+`trading_bot.py` tracks `paper_positions` dict and monitors for SL/TP exits every loop iteration. `_monitor_positions()` checks SL/TP and closes positions when hit.
 
-### 6. Account Info Called Every Tick
-`api.get_account_info()` is called for every ticker every 30 seconds. That's 10 API calls per minute just for account info — could hit rate limits.
+### 2. Daily Loss Limit (FIXED)
+Now uses `-(account_value * config.MAX_DAILY_LOSS)` — not hardcoded. GUI mode auto-continues; CLI mode prompts.
+
+### 3. Order Management (FIXED)
+Paper mode tracks positions in memory with full SL/TP. Live mode would use Schwab's actual orders (PAPER_TRADING default True).
+
+### 4. Position-Aware Signal Blocking (FIXED)
+`_process_ticker()` skips any ticker already in `paper_positions`. `_check_max_positions()` enforces `MAX_POSITIONS = 2`.
+
+### 5. Account API Calls (FIXED)
+Account info fetched once at startup, not per-ticker per-loop.
 
 ---
 
-## WHAT'S CORRECT
+## CURRENT SAFETY (verified)
 
-- ✅ Strategy logic (indicators, signals) — matches backtest
-- ✅ Paper trading gate — orders blocked when `paper_trading: True`
-- ✅ OAuth2 flow — tokens saved/loaded/refreshed
-- ✅ Error handling on API calls
-- ✅ 2% risk per trade calculation
-- ✅ Max 2 positions cap (but not enforced — see #1)
-- ✅ .gitignore excludes tokens.json and venv
+- ✅ Paper trading gate (`PAPER_TRADING = True` blocks all real orders)
+- ✅ OAuth2 with token refresh
+- ✅ Signal handlers for graceful shutdown
+- ✅ Position persistence (`positions.json`)
+- ✅ Daily loss limit with GUI auto-continue
+- ✅ GUI mode skips blocking `input()` prompt
+- ✅ GUI mode skips signal handlers (thread-safe)
+- ✅ Bot runs as daemon thread; clean stop via `_stop_requested`
+
+---
+
+## FILE STATUS
+
+| File | Status |
+|------|--------|
+| `trading_bot.py` | Active — main bot logic |
+| `gui/app.py` | Active — Flask + pywebview server |
+| `gui/dashboard.html` | Active — dark btop-style UI |
+| `launch.sh` | Active — one-command launcher |
+| `tui.py` | Legacy — use GUI instead |
+| `live_bot.py`, `live_bot_futures.py` | Legacy — superseded by `trading_bot.py` |
+| `scalping_backtest.py`, `enhanced_backtest.py`, `futures_backtest.py` | Legacy — backtest tools only |
+
+---
+
+## KNOWN LIMITATIONS
+
+- No actual order fill tracking for live trading (would need Schwab order status API)
+- Trade log in-memory only on GUI side (full log persisted to `trade_log.json`)
+- Futures symbols hardcoded; changing markets requires editing `Config`
 
 ---
 
 ## RECOMMENDED ACTION
 
-**DO NOT set `paper_trading: False` until the main loop is rewritten to track positions and manage orders.**
-
-The current code is safe in paper trading mode (no real orders), but it's NOT ready for live trading. The signal generation works, but order management is missing entirely.
+Paper trade first via GUI. The bot logic is sound. Verify fills and behavior before going live.

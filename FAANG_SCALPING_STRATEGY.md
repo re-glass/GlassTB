@@ -6,12 +6,16 @@
 
 ## Overview
 
-A production-ready automated trading bot supporting:
+**GlassTB** — a production-ready automated trading bot with a native cross-platform GUI:
 - **Markets:** FAANG stocks and Futures (YM, GC, ES, NQ, CL, SI)
-- **Strategies:** Mean Reversion (primary), Trend Following
-- **Broker:** Charles Schwab (official API, OAuth2)
-- **Safety:** Position persistence, graceful shutdown, risk management, daily-loss interactive prompt
-- **Visualization:** Rich-based TUI dashboard with live prices, sparkline charts, positions, and account overview
+- **Strategies:** Mean Reversion (primary), Trend Following, Swing
+- **Paper & Live trading**
+- **Native GUI** — Flask + pywebview, dark dashboard, Start/Stop control, trade log
+- **Cross-platform** — WebKitGTK (Linux), WebKit (macOS), Edge (Windows)
+
+Run it: `cd GlassTB && ./launch.sh`
+- **Safety:** Position persistence, graceful shutdown, risk management, GUI auto-continue on daily loss
+- **Visualization:** Native GUI (Flask + pywebview) with live dashboard — Start/Stop bot, trade log, candlestick charts, positions, account overview
 
 ---
 
