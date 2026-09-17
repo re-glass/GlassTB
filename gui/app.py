@@ -65,7 +65,7 @@ state = {
     'positions':    [],
     'trade_log':    [],
     'bot_running':  False,
-    'bot_status':   'idle',     # idle | starting | running | stopping | error
+    'bot_status':   'idle',     # idle | running | error
     'bot_strategy': 'mean_reversion',
     'bot_paper':    True,
     'bot_error':    '',
@@ -473,11 +473,11 @@ def bot_status_html():
         btn_class = 'btn btn-stop'
         status_label = 'RUNNING'
         status_class = 'bot-running'
-    elif status == 'stopping':
-        btn_text = 'STOPPING...'
-        btn_class = 'btn btn-stop disabled'
-        status_label = 'STOPPING'
-        status_class = 'bot-stopping'
+    elif status == 'error':
+        btn_text = 'RETRY BOT'
+        btn_class = 'btn btn-start'
+        status_label = 'ERROR'
+        status_class = 'bot-stopped'
     else:
         btn_text = 'START BOT'
         btn_class = 'btn btn-start'
@@ -485,14 +485,13 @@ def bot_status_html():
         status_class = 'bot-stopped'
 
     paper_label = 'PAPER' if paper else 'LIVE'
-    disabled = ' disabled' if status == 'stopping' else ''
 
     parts = []
     parts.append('<div class="box bot-control-panel">')
     parts.append('<div class="bot-control-top">')
     parts.append('<span class="bot-status-label ' + status_class + '">' + status_label + '</span>')
     parts.append('<span class="bot-mode-label">' + paper_label + '</span>')
-    parts.append('<button class="' + btn_class + '"' + disabled + ' onclick="toggleBot()">' + btn_text + '</button>')
+    parts.append('<button class="' + btn_class + '" onclick="toggleBot()">' + btn_text + '</button>')
     parts.append('</div>')
     parts.append('<div class="bot-control-info">')
     parts.append('<span class="metric"><span class="label">Strategy:</span> <span class="value">' + strategy + '</span></span>')
@@ -666,7 +665,6 @@ table.price-table tbody tr:last-child td{border-bottom:none}
 .bot-status-label{font-weight:bold;font-size:12px;letter-spacing:1px;padding:2px 8px;border-radius:2px}
 .bot-running{color:#0a0a12;background:#7ec8e3}
 .bot-stopped{color:#0a0a12;background:#6a8098}
-.bot-stopping{color:#0a0a12;background:#e0a060}
 .bot-mode-label{font-size:11px;color:#7a8a9a;margin-left:auto}
 .btn{padding:4px 14px;border:1px solid #5a7a9a;border-radius:2px;background:#0c0c16;color:#7ec8e3;font-family:inherit;font-size:12px;font-weight:bold;letter-spacing:1px;cursor:pointer}
 .btn:hover{background:#1a2a3a}

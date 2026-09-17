@@ -157,7 +157,7 @@ FINRA PDT rule was repealed June 2026. The old $25k minimum and 3-per-5-day limi
 
 ## Repo
 
-`https://github.com/re-glass/TradingBot-code` — GlassTB (bot + GUI), backtest/analysis files.
+`https://github.com/re-glass/GlassTB` — GlassTB (bot + GUI), backtest/analysis files.
 
 Agent files live at `https://github.com/re-glass/glass-agent` (Hermes skills, memories, config).
 
