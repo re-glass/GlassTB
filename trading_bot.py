@@ -165,7 +165,7 @@ class SchwabAPI:
         }
     
     def authenticate(self):
-        """Run OAuth2 flow."""
+        """Run OAuth2 flow (headless — no browser)."""
         auth_url = (
             f"{self.base_url}/oauth/authorize"
             f"?client_id={self.config.APP_KEY}"
@@ -173,16 +173,13 @@ class SchwabAPI:
             f"&response_type=code"
         )
         
-        log.info("Opening browser for authentication...")
-        print(f"\n{auth_url}\n")
+        print(f"\n{'='*60}\nSCHWAB AUTHENTICATION (Headless)\n{'='*60}")
+        print(f"Open this URL in any browser:\n\n{auth_url}\n")
+        print("After authorizing, copy the 'code' from the redirect URL.")
+        print(f"{'='*60}\n")
         
-        import webbrowser
-        webbrowser.open(auth_url)
+        code = input("Enter authorization code or redirect URL: ").strip()
         
-        # Wait for manual code entry
-        code = input("Enter the authorization code: ").strip()
-        
-        # Extract code from URL if needed
         if 'code=' in code:
             if code.startswith('http'):
                 query = urllib.parse.urlparse(code).query
