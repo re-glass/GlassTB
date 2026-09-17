@@ -382,61 +382,10 @@ def stop_bot():
 
 # ── HTML builders ──
 
-def price_html(ticker, price, max_price):
-    """Render a Symbol/Price/Chart row for one ticker."""
+def price_html(ticker, price):
+    """Render a Symbol/Price row for one ticker."""
     px = price or 0
-    is_candle = ticker in ('/GC', '/ES')
-    parts = []
-
-    if is_candle:
-        # OHLC candlestick for /GC and /ES
-        hist_vals = state.get('history', {}).get(ticker, [])[-5:]
-        if len(hist_vals) >= 2:
-            o = hist_vals[0]
-            h = max(hist_vals)
-            l = min(hist_vals)
-            c = hist_vals[-1]
-        else:
-            o = px
-            h = px * 1.002
-            l = px * 0.998
-            c = px
-
-        rng = max(h - l, px * 0.001, 0.01)
-        scale = 26.0 / rng
-
-        body_h = max(3, abs(c - o) * scale)
-        body_top = (min(o, c) - l) * scale
-        wick_top = (h - l) * scale
-        wick_bot = (l - l) * scale  # = 0
-
-        wick_css = 'top:' + str(max(0, wick_top)) + 'px;'
-        body_css = 'top:' + str(max(0, body_top)) + 'px;height:' + str(max(3, body_h)) + 'px;'
-
-        parts.append('<td>' + ticker + '</td>')
-        parts.append('<td>$' + f'{px:,.2f}' + '</td>')
-        parts.append('<td><span class="candle">')
-        parts.append('<span class="wick" style="' + wick_css + '"></span>')
-        parts.append('<span class="cbody" style="' + body_css + '"></span>')
-        parts.append('</span></td>')
-    else:
-        # Horizontal bar for /YM /NQ /CL /SI
-        # Use log scale so small-priced assets still show visible bars
-        import math
-        if px > 0:
-            # log scale: map price to 5-74px range
-            log_px = math.log10(max(px, 1))
-            log_max = math.log10(max(max_price, 10))
-            log_min = log_max - 2.0  # 2 orders of magnitude range
-            pct = max(0.05, min(0.98, (log_px - log_min) / (log_max - log_min)))
-            bar_w = max(4, int(74 * pct))
-        else:
-            bar_w = 4
-
-        parts.append('<td>' + ticker + '</td>')
-        parts.append('<td>$' + f'{px:,.2f}' + '</td>')
-        parts.append('<td><span class="bar-track"><span class="bar-fill" style="width:' + str(bar_w) + 'px"></span></span></td>')
-    return ''.join(parts)
+    return '<td>' + ticker + '</td><td>$' + f'{px:,.2f}' + '</td>'
 
 def positions_html(positions):
     if not positions:
@@ -570,10 +519,10 @@ def scene_html():
     parts.append('</div>')
     parts.append('<div class="box">')
     parts.append('<div class="market-header">BID/ASK</div>')
-    parts.append('<table class="price-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chart</th></tr></thead>')
+    parts.append('<table class="price-table"><thead><tr><th>Symbol</th><th>Price</th></tr></thead>')
     parts.append('<tbody>')
     for t in TICKERS:
-        parts.append('<tr>' + price_html(t, st['prices'].get(t), st['max_price']) + '</tr>')
+        parts.append('<tr>' + price_html(t, st['prices'].get(t)) + '</tr>')
     parts.append('</tbody></table>')
     parts.append('</div>')
     parts.append('<div class="box">')
@@ -648,14 +597,8 @@ body{background:#0a0a12;color:#a0b0c8;font-family:"DejaVu Sans Mono",monospace;f
 table.price-table{width:100%;border-collapse:collapse;font-size:12px}
 table.price-table th{color:#7ec8e3;text-align:left;padding:4px 8px;font-weight:bold;letter-spacing:1px;font-size:11px;border-bottom:1px solid #3a5a7a}
 table.price-table th:nth-child(2),table.price-table td:nth-child(2){text-align:right}
-table.price-table th:nth-child(3),table.price-table td:nth-child(3){text-align:center;width:120px}
 table.price-table td{padding:4px 8px;border-bottom:1px solid #1a2a3a;color:#8aa0b8}
 table.price-table tbody tr:last-child td{border-bottom:none}
-.bar-track{display:inline-block;height:11px;background:#14142a;border:1px solid #3a5a7a;border-radius:1px;width:80px;position:relative;overflow:hidden}
-.bar-fill{display:block;height:100%;background:#7ec8e3;transition:width 0.5s}
-.candle{display:inline-block;position:relative;width:16px;height:30px}
-.wick{position:absolute;left:50%;transform:translateX(-50%);width:1px;background:#7ec8e3;top:0;bottom:0}
-.cbody{position:absolute;left:1px;right:1px;background:#7ec8e3;min-height:2px}
 .pos-header{text-align:center;color:#7ec8e3;font-weight:bold;font-size:14px;letter-spacing:2px;position:relative;padding-bottom:3px;margin-bottom:1px}
 .pos-header::after{content:'';position:absolute;bottom:0;left:5%;right:5%;height:1px;background:#3a5a7a}
 .pos-box{margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:#6a8098}
