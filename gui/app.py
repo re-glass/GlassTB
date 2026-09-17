@@ -177,69 +177,75 @@ def fetch_data_sync():
     total_bp = 0.0
     total_value = 0.0
     positions = []
-
     if acct_hash:
+        # Get full account data (no fields param - Schwab returns 400 with custom fields)
         try:
             r = req.get(
                 f'https://api.schwabapi.com/trader/v1/accounts/{acct_hash}',
-                headers=headers, params={'fields': 'portfolio'},
+                headers=headers,
                 timeout=10
             )
             if r.status_code == 200:
                 body = r.json()
-                for sec in (body.get('securities') or []):
-                    ln = sec.get('currentDaysHoldQuantity') or sec.get('longQuantity') or 0
-                    sh = sec.get('shortQuantity') or 0
-                    qty = (ln or 0) - (sh or 0)
-                    cur = sec.get('currentValue') or 0
-                    avg = sec.get('averagePrice') or 0
-                    if qty != 0 and cur:
+                acct = body.get('securitiesAccount') or body
+                
+                # Parse positions
+                positions_data = acct.get('positions') or []
+                for sec in positions_data:
+                    qty = sec.get('longQuantity', 0) - sec.get('shortQuantity', 0)
+                    cur = sec.get('marketValue', 0) or sec.get('currentValue', 0)
+                    avg = sec.get('averagePrice', 0)
+                    if qty != 0:
                         positions.append({
-                            'symbol': sec.get('symbol') or sec.get('instrument') or '—',
+                            'symbol': sec.get('symbol') or sec.get('instrument', {}).get('symbol') or '—',
                             'side': 'long' if qty > 0 else 'short',
                             'qty': abs(qty),
                             'avg_entry': avg,
                             'current_value': cur,
-                            'pnl': cur - (avg * abs(qty)),
+                            'pnl': cur - (avg * abs(qty)) if avg else 0,
                         })
-                    total_value += cur or 0
+                    total_value += abs(cur) or 0
+                
+                # Parse balances - check multiple possible locations
+                balances = acct.get('currentBalances') or acct.get('initialBalances') or {}
+                cash = (balances.get('cashAvailableForTrading')
+                        or balances.get('availableFunds')
+                        or balances.get('availableFundsNonMarginableTrade')
+                        or balances.get('settlementFunds')
+                        or balances.get('cashBalance')
+                        or balances.get('liquidationValue')
+                        or 0.0)
+                if isinstance(cash, (int, float)) and cash > 0:
+                    total_cash = cash
+                
+                # Buying power
+                bp = (balances.get('buyingPower')
+                      or balances.get('dayTradingBuyingPower')
+                      or balances.get('maintenanceCall')
+                      or 0.0)
+                if isinstance(bp, (int, float)) and bp > 0:
+                    total_bp = bp
+                
+                # If no cash found, try liquidationValue on the account itself
+                if total_cash == 0:
+                    lv = acct.get('liquidationValue')
+                    if isinstance(lv, (int, float)) and lv > 0:
+                        total_cash = lv
+                
+                # Liquidation value as "value"
+                if total_value == 0:
+                    lv = acct.get('liquidationValue')
+                    if isinstance(lv, (int, float)) and lv > 0:
+                        total_value = lv
+                
+                # If still 0, use cash as value
+                if total_value == 0 and total_cash > 0:
+                    total_value = total_cash
         except Exception:
             pass
-
-        for key in ('settlementFunds', 'cashAvailableForTrading',
-                    'cashAvailableForWithdrawal', 'availableFunds',
-                    'buyingPower', 'buyingPowerAmount'):
-            try:
-                r = req.get(
-                    f'https://api.schwabapi.com/trader/v1/accounts/{acct_hash}',
-                    headers=headers, params={'fields': key},
-                    timeout=10
-                )
-                if r.status_code == 200:
-                    body = r.json()
-                    def dig(o):
-                        if isinstance(o, dict):
-                            for k, v in o.items():
-                                if k in ('settlementFunds', 'cashAvailableForTrading',
-                                         'cashAvailableForWithdrawal', 'availableFunds',
-                                         'buyingPower', 'buyingPowerAmount'):
-                                    if isinstance(v, (int, float)):
-                                        return float(v)
-                                res = dig(v)
-                                if res is not None:
-                                    return res
-                        elif isinstance(o, list):
-                            for item in o:
-                                res = dig(item)
-                                if res is not None:
-                                    return res
-                        return None
-                    f = dig(body)
-                    if f is not None and f > 0:
-                        total_cash = max(total_cash, f)
-            except Exception:
-                pass
-        total_bp = total_cash * 4.0
+        
+        if total_bp == 0:
+            total_bp = total_cash * 4.0
 
     total_pnl = 0.0
     for p in positions:
@@ -298,7 +304,7 @@ def fetch_data_sync():
 # ── data refresh loop (runs on main thread via threading.Timer) ──
 
 def tick():
-    """Called every 3s; refresh data, schedule next."""
+    """Called every 3s; refresh data, schedule next. Always reschedules."""
     global _shutdown
     if _shutdown:
         return
@@ -308,12 +314,16 @@ def tick():
     s['uptime'] = time.perf_counter() - s['up_since']
     s['timer'] = time.time()
     s['timestamp'] = fmt_time()
-    fetch_data_sync()
-    s['refresh_count'] += 1
-    # schedule next
-    t = threading.Timer(3.0, tick)
-    t.daemon = True
-    t.start()
+    try:
+        fetch_data_sync()
+        s['refresh_count'] += 1
+    except Exception as e:
+        s['bot_error'] = f'Data refresh error: {str(e)[:100]}'
+    # schedule next (always, even on error)
+    if not _shutdown:
+        t = threading.Timer(3.0, tick)
+        t.daemon = True
+        t.start()
 
 # ── bot control ──
 
