@@ -358,42 +358,59 @@ def stop_bot():
 # ── HTML builders ──
 
 def price_html(ticker, price, max_price):
-    """Render a Symbol/Price/Chart/7c row for one ticker."""
+    """Render a Symbol/Price/Chart row for one ticker."""
     px = price or 0
-    max_p = max_price or 1.0
-    pct = max(0.02, min(0.98, px / max_p if max_p else 0.5))
-    bar_w = int(74 * pct)
-
     is_candle = ticker in ('/GC', '/ES')
     parts = []
 
     if is_candle:
-        hist_vals = state.get('history', {}).get(ticker, [])[-4:]
-        o = hist_vals[0] if len(hist_vals) > 0 else px
-        h = max(hist_vals) if hist_vals else px * 1.002
-        l = min(hist_vals) if hist_vals else px * 0.998
-        c = hist_vals[-1] if len(hist_vals) > 1 else px
-        body_h = max(4, abs(c - o))
-        body_top = min(o, c)
-        wick_top = h
-        wick_bot = l
-        max_range = max(h - l, px * 0.01, 1)
-        scale = 30.0 / max_range if max_range else 1.0
-        body_px_h = max(2, body_h * scale)
-        body_px_top = (body_top - l) * scale
-        wick_px_top = (wick_top - l) * scale
-        wick_px_bot = (wick_bot - l) * scale
-        wick_css = 'top:' + str(max(0, wick_px_top)) + 'px;bottom:' + str(max(0, 28 - wick_px_bot)) + 'px;'
+        # OHLC candlestick for /GC and /ES
+        hist_vals = state.get('history', {}).get(ticker, [])[-5:]
+        if len(hist_vals) >= 2:
+            o = hist_vals[0]
+            h = max(hist_vals)
+            l = min(hist_vals)
+            c = hist_vals[-1]
+        else:
+            o = px
+            h = px * 1.002
+            l = px * 0.998
+            c = px
+
+        rng = max(h - l, px * 0.001, 0.01)
+        scale = 26.0 / rng
+
+        body_h = max(3, abs(c - o) * scale)
+        body_top = (min(o, c) - l) * scale
+        wick_top = (h - l) * scale
+        wick_bot = (l - l) * scale  # = 0
+
+        wick_css = 'top:' + str(max(0, wick_top)) + 'px;'
+        body_css = 'top:' + str(max(0, body_top)) + 'px;height:' + str(max(3, body_h)) + 'px;'
+
         parts.append('<td>' + ticker + '</td>')
         parts.append('<td>$' + f'{px:,.2f}' + '</td>')
-        parts.append('<td><span class="candle"><span class="wick" style="' + wick_css + '"></span>')
-        parts.append('<span class="cbody" style="margin-top:' + str(max(0, body_px_top)) + 'px;height:' + str(max(2, body_px_h)) + 'px"></span></span></td>')
-        parts.append('<td>-</td>')
+        parts.append('<td><span class="candle">')
+        parts.append('<span class="wick" style="' + wick_css + '"></span>')
+        parts.append('<span class="cbody" style="' + body_css + '"></span>')
+        parts.append('</span></td>')
     else:
+        # Horizontal bar for /YM /NQ /CL /SI
+        # Use log scale so small-priced assets still show visible bars
+        import math
+        if px > 0:
+            # log scale: map price to 5-74px range
+            log_px = math.log10(max(px, 1))
+            log_max = math.log10(max(max_price, 10))
+            log_min = log_max - 2.0  # 2 orders of magnitude range
+            pct = max(0.05, min(0.98, (log_px - log_min) / (log_max - log_min)))
+            bar_w = max(4, int(74 * pct))
+        else:
+            bar_w = 4
+
         parts.append('<td>' + ticker + '</td>')
         parts.append('<td>$' + f'{px:,.2f}' + '</td>')
-        parts.append('<td><span class="bar-outer"><span class="bar-track"><span class="bar-fill" style="width:' + str(bar_w) + 'px"></span></span></span></td>')
-        parts.append('<td>-</td>')
+        parts.append('<td><span class="bar-track"><span class="bar-fill" style="width:' + str(bar_w) + 'px"></span></span></td>')
     return ''.join(parts)
 
 def positions_html(positions):
@@ -506,9 +523,6 @@ def scene_html():
 
     parts = []
     parts.append('<div class="container">')
-    parts.append('<div class="box top-box">No open positions</div>')
-    parts.append('<div class="box status-bar"><span class="cursor"></span>refresh in 3s &bull; uptime '
-                 + f"{st['uptime']:.0f}" + 's &bull; ctrl+c quit</div>')
     parts.append(bot_html)
     parts.append('<div class="box bot-panel">')
     parts.append('<div class="bot-title-row">')
@@ -532,7 +546,7 @@ def scene_html():
     parts.append('</div>')
     parts.append('<div class="box">')
     parts.append('<div class="market-header">BID/ASK</div>')
-    parts.append('<table class="price-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chart</th><th>7c</th></tr></thead>')
+    parts.append('<table class="price-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chart</th></tr></thead>')
     parts.append('<tbody>')
     for t in TICKERS:
         parts.append('<tr>' + price_html(t, st['prices'].get(t), st['max_price']) + '</tr>')
@@ -543,8 +557,6 @@ def scene_html():
     parts.append(positions_html(st['positions']))
     parts.append('</div>')
     parts.append(log_html)
-    parts.append('<div class="box status-bar"><span class="cursor"></span>refresh in 3s &bull; uptime '
-                 + f"{st['uptime']:.0f}" + 's &bull; ctrl+c quit</div>')
     parts.append('</div>')
     return ''.join(parts)
 
@@ -612,16 +624,14 @@ body{background:#0a0a12;color:#a0b0c8;font-family:"DejaVu Sans Mono",monospace;f
 table.price-table{width:100%;border-collapse:collapse;font-size:12px}
 table.price-table th{color:#7ec8e3;text-align:left;padding:4px 8px;font-weight:bold;letter-spacing:1px;font-size:11px;border-bottom:1px solid #3a5a7a}
 table.price-table th:nth-child(2),table.price-table td:nth-child(2){text-align:right}
-table.price-table th:nth-child(3),table.price-table td:nth-child(3){text-align:center}
-table.price-table th:nth-child(4),table.price-table td:nth-child(4){text-align:center;width:36px}
+table.price-table th:nth-child(3),table.price-table td:nth-child(3){text-align:center;width:120px}
 table.price-table td{padding:4px 8px;border-bottom:1px solid #1a2a3a;color:#8aa0b8}
 table.price-table tbody tr:last-child td{border-bottom:none}
-.bar-outer{display:inline-flex;align-items:center;justify-content:center;gap:4px}
-.bar-track{display:inline-block;height:11px;background:#14142a;border:1px solid #3a5a7a;border-radius:1px;width:74px;position:relative;overflow:hidden}
-.bar-fill{display:block;height:100%;background:#7ec8e3}
-.candle{display:inline-flex;flex-direction:column;align-items:center;position:relative;height:30px}
-.wick{position:absolute;left:50%;transform:translateX(-50%);width:1px;background:#7ec8e3;top:5px;bottom:5px}
-.cbody{display:inline-block;background:#7ec8e3;height:10px;margin-top:8px}
+.bar-track{display:inline-block;height:11px;background:#14142a;border:1px solid #3a5a7a;border-radius:1px;width:80px;position:relative;overflow:hidden}
+.bar-fill{display:block;height:100%;background:#7ec8e3;transition:width 0.5s}
+.candle{display:inline-block;position:relative;width:16px;height:30px}
+.wick{position:absolute;left:50%;transform:translateX(-50%);width:1px;background:#7ec8e3;top:0;bottom:0}
+.cbody{position:absolute;left:1px;right:1px;background:#7ec8e3;min-height:2px}
 .pos-header{text-align:center;color:#7ec8e3;font-weight:bold;font-size:14px;letter-spacing:2px;position:relative;padding-bottom:3px;margin-bottom:1px}
 .pos-header::after{content:'';position:absolute;bottom:0;left:5%;right:5%;height:1px;background:#3a5a7a}
 .pos-box{margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:#6a8098}
