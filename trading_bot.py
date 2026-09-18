@@ -38,7 +38,7 @@ class Config:
     
     # Markets (uncomment one)
     # TICKERS = ['AAPL', 'GOOGL', 'META', 'AMZN', 'NFLX']  # Stocks
-    TICKERS = ['/YM', '/GC', '/ES', '/NQ', '/CL', '/SI']  # Futures
+    TICKERS = ['/MYM', '/MES', '/MNQ', '/MGC', '/MCL', '/SIL']  # Micro Futures (default)
     
     # Strategy: 'mean_reversion', 'trend_following', 'swing'
     STRATEGY = 'mean_reversion'

@@ -92,8 +92,9 @@ Edit `trading_bot.py`, class `Config`:
 
 ```python
 # Markets (uncomment one)
-# TICKERS = ['AAPL', 'GOOGL', 'META', 'AMZN', 'NFLX']  # Stocks
-TICKERS = ['/YM', '/GC', '/ES', '/NQ', '/CL', '/SI']   # Futures (default)
+TICKERS = ['/MYM', '/MES', '/MNQ', '/MGC', '/MCL', '/SIL']   # Micro Futures (default)
+# TICKERS = ['/YM', '/GC', '/ES', '/NQ', '/CL', '/SI']       # Standard Futures (> $25K)
+# TICKERS = ['AAPL', 'GOOGL', 'META', 'AMZN', 'NFLX']       # Stocks
 
 # Strategy
 STRATEGY = 'mean_reversion'   # 'mean_reversion' | 'trend_following' | 'swing'

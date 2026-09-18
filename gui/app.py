@@ -33,7 +33,7 @@ APP = Flask(__name__, static_folder=None)
 APP.debug = False
 APP.config['PROPAGATE_EXCEPTIONS'] = False
 
-TICKERS = ['/YM', '/GC', '/ES', '/NQ', '/CL', '/SI']
+TICKERS = ['/MYM', '/MES', '/MNQ', '/MGC', '/MCL', '/SIL']
 
 # ── paths (relative to THIS file) ──
 HERE = os.path.dirname(os.path.abspath(__file__))

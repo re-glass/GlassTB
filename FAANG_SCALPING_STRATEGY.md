@@ -7,7 +7,7 @@
 ## Overview
 
 **GlassTB** — a production-ready automated trading bot with a native cross-platform GUI:
-- **Markets:** FAANG stocks and Futures (YM, GC, ES, NQ, CL, SI)
+- **Markets:** FAANG stocks and Micro Futures (/MYM, /MES, /MNQ, /MGC, /MCL, /SIL)
 - **Strategies:** Mean Reversion (primary), Trend Following, Swing
 - **Paper & Live trading**
 - **Native GUI** — Flask + pywebview, dark dashboard, Start/Stop control, trade log
@@ -57,8 +57,11 @@ Edit `trading_bot.py`, class `Config`:
 # For stocks:
 TICKERS = ['AAPL', 'GOOGL', 'META', 'AMZN', 'NFLX']
 
-# For futures (default):
-TICKERS = ['/YM', '/GC', '/ES', '/NQ', '/CL', '/SI']
+# For micro futures (default — recommended for small accounts < $5K):
+TICKERS = ['/MYM', '/MES', '/MNQ', '/MGC', '/MCL', '/SIL']
+
+# For standard futures (large accounts > $25K):
+# TICKERS = ['/YM', '/GC', '/ES', '/NQ', '/CL', '/SI']
 
 # Strategy: 'mean_reversion', 'trend_following', 'swing'
 STRATEGY = 'mean_reversion'
