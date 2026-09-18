@@ -1,0 +1,24 @@
+[Unit]
+Description=GlassTB Trading Bot (Schwab Scalper)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%I
+WorkingDirectory=/home/reg/scalping_bot
+ExecStart=/home/reg/scalping_bot/venv/bin/python -u /home/reg/scalping_bot/trading_bot.py
+Restart=on-failure
+RestartSec=10s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=glasstb
+
+# Hardening (optional, remove if bot needs network outside localhost)
+# PrivateTmp=true
+# ProtectSystem=strict
+# ReadWritePaths=/home/reg/scalping_bot
+# NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
